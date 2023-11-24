@@ -37,7 +37,7 @@ catch(AppException $e)
 {
 	echo '<h1>Wystąpił błąd aplikacji</h1>';
 	echo '<h3>' . $e->getMessage() .'</h3>';
-	echo '<h3>' . $e->getPrevious()->getMessage() .'</h3>';
+  echo '<h3>' . $e->getPrevious()->getMessage() .'</h3>';
 }
 
 catch(Throwable $e)

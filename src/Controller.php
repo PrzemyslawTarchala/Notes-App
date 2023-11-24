@@ -5,8 +5,10 @@ declare(strict_types = 1);
 namespace App;
 
 require_once("src/Exception/ConfigurationException.php");
+require_once("src/Exception/NotFoundException.php");
 
 use App\Exception\ConfigurationException;
+use App\Exception\NotFoundException;
 
 require_once("src/Database.php");
 require_once("src/View.php");
@@ -39,8 +41,6 @@ class Controller
 
 	public function run(): void
 	{
-		$viewParams = [];
-		
 		switch($this -> action()){ //zwraca to co znajude sie pod kluczem action w tablicy get lub default_action
 
 			case 'create':
@@ -54,25 +54,46 @@ class Controller
 						'description' => $data['description'] 
 					]);
 					header('Location: /?before=created'); //Przekierowanie do strony glownej
+					exit();
 				}
-				
 				break;
 		
 			case 'show':
-					$viewParams = [
-						'title' => 'Moja notatka',
-						'description' => 'Opis'
-					];
+				$page = 'show';
+
+				$data = $this->getRequestGet();
+			  $noteId = (int) ($data['id'] ?? null);
+
+				if(!$noteId){
+					header('Location: /?error=missingNoteId');
+					exit();  //Trzeba użyć exita aby przerwać wykonywanie skryptu
+				}
+
+				try{
+					$note = $this->database->getNote($noteId);
+				} catch(NotFoundException $e){
+					header('Location: /?error=noteNotFound');
+					exit();
+				}
+
+				$viewParams = [
+					'note' => $note
+				];
+
 				break;
 		
 			default:
 				$page = 'list';
-
 				$data = $this->getRequestGet(); //Dostajemy to co przesyłamy w URL'u
-				$viewParams['before'] = $data['before'] ?? null;
+				
+				$viewParams = [
+					'notes' => $this->database->getNotes(),
+					'before' => $data['before'] ?? null,
+					'error' => $data['error'] ?? null
+				];
 				break;
 		}
-		$this -> view -> render($page, $viewParams);
+		$this -> view -> render($page, $viewParams ?? []);
 	}
 
 	private function action(): string
@@ -86,7 +107,7 @@ class Controller
 		return $this -> request['get'] ?? [];
 	}
 
-private function getRequestPost(): array
+	private function getRequestPost(): array
 	{
 		return $this -> request['post'] ?? [];
 	}
