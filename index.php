@@ -2,28 +2,31 @@
 
 declare(strict_types = 1);
 
-namespace App;
+// namespace App;
+
+spl_autoload_register(function (string $classNamespace) {
+	$path = str_replace(['\\', 'App/'], ['/', ''], $classNamespace); 
+	$path = "src/$path.php";
+	require_once($path);
+});
 
 require_once("src/Utils/debug.php");
-require_once("src/Controller.php");
-require_once("src/Request.php");
-require_once("src/Exception/AppException.php");
+$configuration = require_once("config/config.php");
 
+use App\Controller\AbstractController;
+use App\Controller\NoteController;
 use App\Request;
 use App\Exception\AppException;
 use App\Exception\ConfigurationException;
-use Throwable;
 
-$configuration = require_once("config/config.php");
-
-$request = new Request($_GET, $_POST); //Tablice globalne
+$request = new Request($_GET, $_POST, $_SERVER); //Tablice globalne
 
 try{
 	//$controller = new Controller($request);
 	//$controller -> run();
 
-	Controller::initConfiguration($configuration);
-	(new Controller($request)) -> run(); //to samo
+	AbstractController::initConfiguration($configuration);
+	(new NoteController($request)) -> run(); //to samo
 } 
 
 catch(ConfigurationException $e)
@@ -39,7 +42,7 @@ catch(AppException $e)
   // echo '<h3>' . $e->getPrevious()->getMessage() .'</h3>';
 }
 
-catch(Throwable $e)
+catch(\Throwable $e)
 {
 	echo '<h1>Wystąpił błąd aplikacji</h1>'; 
 	dump($e);
