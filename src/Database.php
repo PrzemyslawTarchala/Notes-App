@@ -44,11 +44,31 @@ private PDO $conn;
 		return $note;
 	}
 
-	public function getNotes(): array
+	public function getNotes(int $pageNumber, int $pageSize, string $sortBy, string $sortOrder): array
 	{
 		try{
 
-			$query = "SELECT id, title, created FROM notes";
+			$limit = $pageSize;
+			$offset = ($pageNumber - 1) * $pageSize;
+
+			if (!in_array($sortBy, ['created', 'title'])) {
+				$sortBy = 'title';
+			}
+
+			if (!in_array($sortOrder, ['asc', 'desc'])) {
+				$sortOrder = 'desc';
+			}
+
+			//Pierwsza zmienna - po czym chcemy wyszukiwac, druga - kierunek 
+			//LIMIT 5 -> pobierz 5 elementow, LIMIT 0, 5 - pobierz od 0 do 5 elementu 
+			$query = "
+				SELECT id, title, created 
+				FROM notes
+				ORDER BY $sortBy $sortOrder  
+				LIMIT $offset, $limit
+			";
+			
+			
 			$result = $this->conn->query($query);
 			return $result->fetchAll(PDO::FETCH_ASSOC);
 			// foreach($result as $row){  To samo co linia wyżej
@@ -57,6 +77,21 @@ private PDO $conn;
 
 		}catch(Throwable $e){
 			throw new StorageException('Nie udało się pobrać danych o notatkach', 400, $e);
+		}
+	}
+
+	public function getCount(): int
+	{
+		try{
+			$query = "SELECT count(*) AS cn FROM notes"; //zwraca liczbe recordow w tabeli notes pod nazwą 'cn'
+			$result = $this->conn->query($query);
+			$result =  $result->fetch(PDO::FETCH_ASSOC);
+			if($result === false){
+				throw new StorageException('Błąd przy próbie pobrania ilości notatek', 400, $e);
+			}
+			return (int) $result['cn'];
+		} catch(Throwable $e){
+			throw new StorageException('Nie udało się pobrać informacji o liczbie notetek', 400, $e);
 		}
 	}
 
@@ -92,6 +127,16 @@ private PDO $conn;
 			$this->conn->exec($query); //Potrzebne do zaktualizowania bazy danych
 		}	catch(Throwable $e){
 			throw new StorageException('Nie udalo się zaktualizować notatki', 400, $e);
+		}
+	}
+
+	public function deleteNote(int $id): void
+	{
+		try{
+			$query = "DELETE FROM notes WHERE id = $id LIMIT 1";
+			$this->conn->exec($query);
+		} catch (Throwable $e){
+			throw new StorageException ('Nie udalo sie usunac notatki', 400, $e);
 		}
 	}
 
