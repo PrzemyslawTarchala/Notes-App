@@ -39,12 +39,17 @@
 
 			$page = $params['page'] ?? [];
 			$size = $page['size'] ?? 10;
-			$number = $page['number'] ?? 1;
+			$currentPage = $page['number'] ?? 1;
 			$pages = $page['pages'] ?? 1;
+
+			$phrase = $params['phrase'] ?? null;
 		?>
 		
 		<div>
 			<form class="settings-form" action="/" method="GET">
+				<div>
+					<label>Wyszukaj:<input type="text" name="phrase" value="<?php echo $phrase ?>"></label>
+				</div>
 				<div>
 					<div>Sortuj po:</div>
 					<label>Tytule: <input name="sortby" type="radio" value="title" <?php echo $by === 'title' ? 'checked' : ''?> /></label>
@@ -99,5 +104,38 @@
 				</tbody>
 			</table>
 		</div>
+	
+
+		<?php 
+			$paginationUrl = "&phrase=$phrase&pagesize=$size?sortby=$by&sortorder=$order";
+		?>
+
+		<ul class="pagination">
+			
+			<?php if ($currentPage !== 1): ?>
+				<li>
+					<a href="/?page=<?php echo $currentPage - 1 . $paginationUrl?>">
+						<button><<</button>
+					</a>
+				</li>	
+			<?php endif; ?>
+
+			<?php for($i = 1; $i <= $pages; $i++) : ?>
+				<li>
+					<a href="/?page=<?php echo $i  . $paginationUrl?>">
+						<button><?php echo $i?></button>
+					</a>
+				</li>						
+			<?php endfor; ?>
+ 
+			<?php if ($currentPage < $pages): ?>
+				<li>
+					<a href="/?page=<?php echo $currentPage + 1 . $paginationUrl ?>">
+						<button>>></button>
+					</a>
+				</li>		
+			<?php endif; ?>
+
+		</ul>
 	</section>
 </div>
