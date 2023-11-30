@@ -4,8 +4,6 @@ declare(strict_types=1);
 
 namespace App\Controller;
 
-use App\Exception\NotFoundException;
-
 class NoteController extends AbstractController
 {
 
@@ -18,7 +16,7 @@ private const PAGE_SIZE = 10;
 				'title' => $this->request->postParam('title'),
 				'description' => $this->request->postParam('description')
 			];
-			$this->database->createNote($noteId );
+			$this->noteModel->create($noteId );
 			$this->redirect('/', ['before' => 'created']);
 		}
 		$this -> view -> render('create');
@@ -42,15 +40,15 @@ private const PAGE_SIZE = 10;
 		}
 
 		if($phrase){
-			$noteList = $this->database->searchNotes($phrase, $pageNumber, $pageSize, $sortBy,  $sortOrder);
-			$notes = $this->database->getSearchCount($phrase);
+			$noteList = $this->noteModel->search($phrase, $pageNumber, $pageSize, $sortBy,  $sortOrder);
+			$notes = $this->noteModel->searchCount($phrase);
 		} else{
-			$noteList = $this->database->getNotes($pageNumber, $pageSize, $sortBy,  $sortOrder);
-			$notes = $this->database->getCount();
+			$noteList = $this->noteModel->list($pageNumber, $pageSize, $sortBy,  $sortOrder);
+			$notes = $this->noteModel->count();
 		}
 
 		$this -> view -> render(
-			'list',
+			'list', 
 			[	
 				'page' => [
 					'number' => $pageNumber, 
@@ -75,7 +73,7 @@ private const PAGE_SIZE = 10;
 				'title' => $this->request->postParam('title'),
 				'description' => $this->request->postParam('description')
 			];
-			$this->database->editNote($noteId, $noteData);
+			$this->noteModel->edit($noteId, $noteData);
 			$this->redirect('/', ['before' => 'edited']);
 		}
 
@@ -90,7 +88,7 @@ private const PAGE_SIZE = 10;
 
 		if ($this->request->isPost()){
 			$id = (int) $this->request->postParam('id');
-			$this->database->deleteNote($id);
+			$this->noteModel->delete($id);
 			$this->redirect('/', ['before' => 'deleted']);
 		}
 
@@ -106,7 +104,7 @@ private const PAGE_SIZE = 10;
 		if(!$noteId) {
 			$this->redirect('/', ['error' => 'missingNoteId']);
 		}
-		
-		return $this->database->getNote($noteId);
+
+		return $this->noteModel->get($noteId);
 	}
 }
